@@ -480,9 +480,9 @@ static int execve_handler_pre(struct kprobe *p, struct pt_regs *regs)
 #ifdef CONFIG_COMPAT
 	argv.is_compat = PT_REGS_PARM3(regs);
 	if (unlikely(argv.is_compat)) {
-		argv.ptr.compat = PT_REGS_CCALL_PARM4(regs);
+		argv.ptr.compat = (void *)(uintptr_t)PT_REGS_CCALL_PARM4(regs);
 	} else {
-		argv.ptr.native = PT_REGS_CCALL_PARM4(regs);
+		argv.ptr.native = (void *)(uintptr_t)PT_REGS_CCALL_PARM4(regs);
 	}
 #else
 	argv.ptr.native = PT_REGS_PARM3(regs);
@@ -510,7 +510,7 @@ static int sys_execve_handler_pre(struct kprobe *p, struct pt_regs *regs)
 	filename_in.name = path;
 
 	filename_p = &filename_in;
-	return ksu_handle_execveat_ksud(AT_FDCWD, &filename_p, &argv, NULL,
+	return ksu_handle_execveat_ksud((void *)(uintptr_t)AT_FDCWD, &filename_p, &argv, NULL,
 					NULL);
 }
 
@@ -531,9 +531,9 @@ static int sys_read_handler_pre(struct kprobe *p, struct pt_regs *regs)
 	struct pt_regs *real_regs = PT_REAL_REGS(regs);
 	unsigned int fd = PT_REGS_PARM1(real_regs);
 	char __user **buf_ptr = (char __user **)&PT_REGS_PARM2(real_regs);
-	size_t count_ptr = (size_t *)&PT_REGS_PARM3(real_regs);
+	size_t count_ptr = (size_t)&PT_REGS_PARM3(real_regs);
 
-	return ksu_handle_sys_read(fd, buf_ptr, count_ptr);
+	return ksu_handle_sys_read(fd, buf_ptr, (void *)(uintptr_t)count_ptr);
 }
 
 static int input_handle_event_handler_pre(struct kprobe *p,
